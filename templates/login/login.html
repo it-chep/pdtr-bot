@@ -1,10 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="login_form">
+    <label>
+        Введите email
+        <input name="email" placeholder="Введите email">
+    </label>
+    <button type="submit">Отправить</button>
+</div>
+{% endblock %}
