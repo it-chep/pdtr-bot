@@ -4,13 +4,13 @@ from sqlalchemy import select, and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from questions.models import Question
 from questions.schemas import CreateQuestion, Questions
-from db import get_db
+from db import get_async_session
 
 
 class QuestionsRepository:
     """Data Access Layer for operating question info"""
 
-    def __init__(self, db=Depends(get_db)):
+    def __init__(self, db=Depends(get_async_session)):
         self.db = db
 
     async def get_all_questions(self) -> List[Questions]:

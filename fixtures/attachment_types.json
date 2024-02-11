@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "code": "video",
+    "name": "Видео"
+  },
+  {
+    "id": 2,
+    "code": "photo",
+    "name": "Фотография"
+  },
+  {
+    "id": 3,
+    "code": "sticker",
+    "name": "Стикер"
+  },
+  {
+    "id": 4,
+    "code": "voice",
+    "name": "Голосовое сообщение"
+  },
+  {
+    "id": 5,
+    "code": "document",
+    "name": "Документ"
+  },
+  {
+    "id": 6,
+    "code": "video-note",
+    "name": "Кружок"
+  },
+  {
+    "id": 7,
+    "code": "photo-group",
+    "name": "Группа фотографий"
+  }
+]

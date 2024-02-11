@@ -1,21 +1,138 @@
-from db import get_db
+from aiogram import types, Router, F
+from aiogram.filters import Command
+from aiogram.types import Contact
+from aiogram.enums.content_type import ContentType
+from sqlalchemy import select, and_, update, or_
+from models import MessageLog, MessageCondition, MessageButton, Message as MessageModel
+from exceptions.data_exceptions import ConditionNotFoundError, MessageNotFoundError
+from service.auth.service import get_phone_markup, create_tg_user, update_tg_user_phone, get_tg_user
+from utils.markups.inline_markup import *
+from repository.repository import *
+from cache.redis import redis_client
+from models import Message
 
-from questions.questions import QuestionsRepository
-from fastapi import Depends
-from questions.schemas import CreateQuestion
+
+async def get_built_message(message: types.Message, user):
+
+    msg, markup, parse_mode = await _build_message(message.from_user.id, message.text)
+    return await send_message(message, msg, markup, parse_mode, user)
 
 
-class QuestionService:
-    def __init__(self, question_repository=Depends(QuestionsRepository)):
-        self.question_repository = question_repository
+async def send_message(message: types.Message, msg: MessageModel, markup, parse_mode, user):
+    if hasattr(msg, 'attachment_type_id') and msg.attachment_type_id:
+        if msg.attachment_type.code == 'photo':
+            sent_message = await message.answer_photo(
+                photo=msg.attachment_id, caption=msg.text, parse_mode=parse_mode, reply_markup=markup
+            )
+            await create_message_log(sent_message, user)
+            return
+        elif msg.attachment_type.code == 'video':
+            sent_message = await message.answer_video(
+                video=msg.attachment_id, caption=msg.text, parse_mode=parse_mode, reply_markup=markup
+            )
+            await create_message_log(sent_message, user)
+            return
+        elif msg.attachment_type.code == 'video-note':
+            sent_message = await message.answer_animation(
+                animation=msg.attachment_id, parse_mode=parse_mode, reply_markup=markup
+            )
+            await create_message_log(sent_message, user)
+            return
+        elif msg.attachment_type.code == 'voice':
+            sent_message = await message.answer_audio(
+                audio=msg.attachment_id, parse_mode=parse_mode, reply_markup=markup
+            )
+            await create_message_log(sent_message, user)
+            return
+        elif msg.attachment_type.code == 'sticker':
+            sent_message = await message.answer_sticker(
+                sticker=msg.attachment_id
+            )
+            await create_message_log(sent_message, user)
+            return
+        elif msg.attachment_type.code == 'document':
+            sent_message = await message.answer_document(
+                document=msg.attachment_id, caption=msg.text, parse_mode=parse_mode, reply_markup=markup,
+            )
+            await create_message_log(sent_message, user)
+            return
+        elif msg.attachment_type.code == 'document':
+            sent_message = await message.answer_document(
+                document=msg.attachment_id, caption=msg.text, parse_mode=parse_mode, reply_markup=markup,
+            )
+            await create_message_log(sent_message, user)
+            return
+        elif msg.attachment_type.code == 'phone':
+            sent_message = await message.answer_contact(
+                phone_number=msg.attachment_id, first_name=msg.text
+            )
+            await create_message_log(sent_message, user)
+            return
 
-    def get_all_questions(self):
-        questions = self.question_repository.get_all_questions()
-        return questions
+    sent_message = await message.answer(text=msg.text, parse_mode=parse_mode, reply_markup=markup)
+    await create_message_log(sent_message, user)
+    return
 
-    def create_question(self, question_data: CreateQuestion):
-        id = self.question_repository.create_question(question_data)
-        return id
 
-    def delete_question(self, question_id):
-        return self.question_repository.delete_question(question_id)
+async def get_message_by_condition_id(condition_id: MessageCondition.id):
+    if condition:
+        query = select(MessageCondition.message_to).where(MessageCondition.id == condition_id)
+
+
+async def get_message_by_id(message_id: Message.id, values=None):
+    if not values:
+        values = []
+
+    if message_id:
+        query = select(Message).where(Message.id == message_id).options(joinedload(Message.attachment_type))
+        result = await async_session_maker().execute(query)
+        row = result.fetchone()
+
+        buttons = await get_test_inline_buttons(values)
+        if row:
+            message = row[0]
+            # TODO: исправить хардкод
+            try:
+                markup = await build_markup(buttons, 2)
+            except Exception as e:
+                logger.error(e)
+                return str(e), None, None
+            parse_mode = "HTML"
+            return message, markup, parse_mode
+
+        else:
+            return str('message id empty_in'), None, None
+    else:
+        return str('message id empty_out'), None, None
+
+
+async def _build_message(user_id, handler) -> (str, List[str], str):
+    try:
+        msg = await _get_message_by_handler_service(handler)
+    except (ConditionNotFoundError, MessageNotFoundError) as e:
+        logger.error(e)
+        return str(e), None, None
+
+    try:
+        markup = await _get_markup_by_message_id(msg.id)
+    except Exception as e:
+        logger.error(e)
+        return str(e), None, None
+    parse_mode = "HTML"
+    return msg, markup, parse_mode
+
+
+async def _get_markup_by_message_id(message_id) -> list:
+    markup = None
+
+    buttons = await get_buttons_by_message_id(message_id)
+    if buttons:
+        # Берем первый элемент, потому что кнопки могут быть только 1 типа
+        button_type = buttons[0].button_type_id
+        markup = await build_markup(buttons, button_type)
+
+    return markup
+
+
+async def _get_message_by_handler_service(handler):
+    return await get_message_by_handler(handler)

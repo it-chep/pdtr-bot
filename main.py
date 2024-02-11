@@ -1,16 +1,27 @@
-from fastapi import FastAPI, Request
+import asyncio
+from fastapi import FastAPI, Request, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from starlette.responses import HTMLResponse
-from service.service import QuestionService
-from questions.schemas import CreateQuestion
-from fastapi import Depends
 
+from starlette.responses import HTMLResponse
+from questions.schemas import CreateQuestion
+
+from aiogram import Bot, Dispatcher, Router, types
+from aiogram.enums import ParseMode
+from aiogram.filters.command import Command
+from routers.questions.routers import question_router
+from routers.auth.routers import auth_router
+from routers.admin.routers import admin_router
+
+from config import BOT_TOKEN
+
+dp = Dispatcher()
+dp.include_router(admin_router)
+dp.include_router(auth_router)
+dp.include_router(question_router)
 
 app = FastAPI()
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
 templates = Jinja2Templates(directory="templates")
 
 
@@ -24,21 +35,19 @@ async def read_item(request: Request):
     return templates.TemplateResponse("login/login.html", {"request": request})
 
 
-@app.post("/api/v1/questions/delete")
-async def get_questions(request: Request, question_id: int, service: QuestionService = Depends(QuestionService)):
-    return await service.delete_questions(question_id)
+@app.post("/RESTAdapter/send_msg_rx/")
+async def get_questions(request: Request):
+    print(request)
+    return HTMLResponse(status_code=200)
 
 
-@app.post("/api/v1/questions/create")
-async def get_questions(request: Request,  question_data: CreateQuestion, service: QuestionService = Depends(QuestionService)):
-    return await service.create_questions(question_data)
+async def main():
+    bot = Bot(token=BOT_TOKEN)
+    await dp.start_polling(bot)
 
-
-@app.get("/api/v1/questions")
-async def get_questions(request: Request, service: QuestionService = Depends(QuestionService)):
-    return await service.get_all_questions()
-
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+if __name__ == "__main__":
+    print('start bot')
+    asyncio.run(main())
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="127.0.0.1", port=8001)

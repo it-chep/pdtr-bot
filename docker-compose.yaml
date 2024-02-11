@@ -1,19 +1,19 @@
 version: '3'
 services:
-  app:
-    env_file:
-      - .env
-    build: .
-    expose:
-      - 8000
-    ports:
-      - "8080:8000"
-    volumes:
-      - .:/app
-    depends_on:
-      - db
+#  app:
+#    env_file:
+#      - .env
+#    build: .
+#    expose:
+#      - 8000
+#    ports:
+#      - "8080:8000"
+#    volumes:
+#      - .:/app
+#    depends_on:
+#      - db
   db:
-    image: postgres:14
+    image: postgres:alpine
     env_file:
       - .env
     environment:
@@ -25,8 +25,16 @@ services:
     ports:
       - "${DB_PORT}:${DB_PORT}"
     volumes:
+       - "pg_data:/var/lib/postgresql/data"
        - ${DUMP_DIR}:/tmp/dumps
-#      - postgres_data:/var/lib/postgresql/data
 
-#volumes:
-#  postgres_data:
+  redis:
+    image: redis
+    container_name: redis
+    expose:
+      - "6379"
+    ports:
+      - "6379:6379"
+
+volumes:
+  pg_data:
