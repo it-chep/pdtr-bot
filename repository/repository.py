@@ -60,7 +60,7 @@ async def get_test_inline_buttons(values):
 
 async def create_message_log(sent_message, user, service_message_id=None):
     async with async_session_maker() as session:
-        if sent_message is None or sent_message.message_id is None:
+        if sent_message is None or not hasattr(sent_message, 'message_id'):
             print("Ошибка: message_id не предоставлен для создания message_log")
             return
 

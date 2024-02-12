@@ -52,10 +52,13 @@ class TgUser(Base):
     lists = Column(ARRAY(Integer))
     extra_data = Column(JSON, nullable=True)
 
+    def __str__(self):
+        return f"{self.id} - {self.name} - tg_id {self.tg_id}"
+
 
 class Question(Base):
     __tablename__ = "questions"
-
+    # allow_many_answers = Bool
     id = Column(Integer, primary_key=True, autoincrement=True)
     right_answer = Column(Integer, nullable=False)
     text = Column(Text, nullable=True)
@@ -179,11 +182,6 @@ class Message(Base):
     message_type = relationship('MessageType', foreign_keys=[message_type_id])
 
     buttons = relationship('MessageButton', cascade='all, delete-orphan')  # list of buttons
-    conditions = relationship(
-        'MessageCondition',
-        foreign_keys="[MessageCondition.message_from_id]",
-        cascade='all, delete-orphan'
-    )  # list of conditions
 
 
 class MessageLog(Base):

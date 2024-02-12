@@ -1,4 +1,4 @@
-import models
+import logging
 from repository.questions.repository import *
 from service.service import *
 from typing import List
@@ -7,6 +7,8 @@ from models import Question, TgUser
 from cache.redis import redis_client
 from sqlalchemy.orm import joinedload
 from db import async_session_maker
+
+logger = logging.getLogger(__name__)
 
 
 async def send_first_question(message, message_text, state, user):
@@ -24,7 +26,7 @@ async def send_first_question(message, message_text, state, user):
         if not message_condition or not message_condition.question:
             # Обработка ошибки или невозможности найти вопрос
             return await message.answer("Вопрос не найден.")
-
+        logger.info(message_condition, message_condition.question)
         question = message_condition.question
         answers = [str(answer) for answer in question.answers]
 
@@ -46,14 +48,19 @@ async def send_next_question(message: types.Message, message_text: str, state: s
     except ValueError:
         # Обработка некорректного номера вопроса
         return
-    is_right_answer, answers, next_message_id = await check_answer(message, message_text, question_number)
+    is_right_answer, answers, next_message_id, lesson = await check_answer(message, message_text, question_number, user)
 
     if is_right_answer is None:
         return
     elif is_right_answer is False:
-        await message.answer('Ответ неверный, попробуйте еще раз')
+        msg = await message.answer('Ответ неверный, попробуйте еще раз')
+        await create_message_log(msg, user)
 
     # Получение и отправка сообщения
     msg, markup, parse_mode = await get_message_by_id(next_message_id, values=answers)
     await send_message(message, msg, markup, parse_mode, user)
 
+    if lesson:
+        answers, next_message_id = await get_question_after_lesson(state)
+        msg, markup, parse_mode = await get_message_by_id(next_message_id, values=answers)
+        await send_message(message, msg, markup, parse_mode, user)

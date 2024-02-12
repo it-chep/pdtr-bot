@@ -14,6 +14,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 DATABASE = os.getenv("DATABASE")
 DEFAULT_TIMEOUT = 60 * 60
 BROKER_URL = os.getenv("BROKER_URL")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+WEBHOOK_PATH = os.getenv("WEBHOOK_PATH")
 
 
 # TODO: красиво сделать
@@ -47,5 +49,7 @@ AcceptableFormats = {
 """
 AcceptableFormats = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', ]
 
-
+DEBUG = True
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+TECH_SUPPORT_CHAT = os.getenv("TECH_SUPPORT_CHAT")

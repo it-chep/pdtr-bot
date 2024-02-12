@@ -9,6 +9,7 @@ from service.admin.load_users import load_users_from_file
 from service.service import create_message_log
 from utils.markups.static_markup import reply_markup
 from repository.admin.repository import create_mailing
+from utils.errors.mailing_errors import StepNotFoundError
 from service.admin.mailings import get_next_mailing_step, send_mailing_to_users, rollback_mailing, MailingSteps
 logger = logging.getLogger(__name__)
 
@@ -28,20 +29,25 @@ async def admin_load_clients_from_file(message: types.Message):
 
 async def admin_upload_file(message: types.Message, ):
     if message.photo:
-        return message.answer(text=f"Вот ваша фотография <code>{message.photo[-1].file_id}</code>",
+        msg = await message.answer(text=f"Вот ваша фотография <code>{message.photo[-1].file_id}</code>",
                               parse_mode="HTML")
+        return msg
     if message.document:
-        return message.answer(text=f"Вот ваш документ <code>{message.document.file_id}</code>",
+        msg = await message.answer(text=f"Вот ваш документ <code>{message.document.file_id}</code>",
                               parse_mode="HTML")
+        return msg
     if message.video:
-        return message.answer(text=f"Вот ваше видео <code>{message.video.file_id}</code>",
+        msg = await message.answer(text=f"Вот ваше видео <code>{message.video.file_id}</code>",
                               parse_mode="HTML")
+        return msg
     if message.video_note:
-        return message.answer(text=f"Вот ваше видео (кружочек) <code>{message.video_note.file_id}</code>",
+        msg = await message.answer(text=f"Вот ваше видео (кружочек) <code>{message.video_note.file_id}</code>",
                               parse_mode="HTML")
+        return msg
     if message.sticker:
-        return message.answer(text=f"Вот ваш стикер <code>{message.sticker.file_id}</code>",
+        msg = await message.answer(text=f"Вот ваш стикер <code>{message.sticker.file_id}</code>",
                               parse_mode="HTML")
+        return msg
 
 
 async def admin_send_mailing(message: types.Message, user):

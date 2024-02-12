@@ -22,10 +22,7 @@ class RedisClient(object):
             client = self.get_redis(broker_url)
             client.echo("test")
         except (redis.ConnectionError, redis.ResponseError) as e:
-            if config.DEBUG or config.TEST_CONFIGURATION:
-                client = get_fake_redis()
-            else:
-                raise redis.ConnectionError("Redis not available: {}".format(e))
+            raise redis.ConnectionError("Redis not available: {}".format(e))
         return client
 
     def get_redis(self, broker_url=None, new_connect=False):

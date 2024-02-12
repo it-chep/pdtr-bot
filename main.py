@@ -1,19 +1,14 @@
 import asyncio
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from starlette.responses import HTMLResponse
-from questions.schemas import CreateQuestion
+from aiogram import Bot, Dispatcher, types
 
-from aiogram import Bot, Dispatcher, Router, types
-from aiogram.enums import ParseMode
-from aiogram.filters.command import Command
+from config import BOT_TOKEN, WEBHOOK_URL, WEBHOOK_PATH
 from routers.questions.routers import question_router
 from routers.auth.routers import auth_router
 from routers.admin.routers import admin_router
-
-from config import BOT_TOKEN
 
 dp = Dispatcher()
 dp.include_router(admin_router)
@@ -24,30 +19,46 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+WEBHOOK_FULL_URL = WEBHOOK_URL + WEBHOOK_PATH
+
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/test", response_class=HTMLResponse)
-async def read_item(request: Request):
-    return templates.TemplateResponse("login/login.html", {"request": request})
-
-
-@app.post("/RESTAdapter/send_msg_rx/")
-async def get_questions(request: Request):
-    print(request)
-    return HTMLResponse(status_code=200)
-
-
-async def main():
+async def on_startup(dp: Dispatcher):
     bot = Bot(token=BOT_TOKEN)
-    await dp.start_polling(bot)
+    await bot.set_webhook(WEBHOOK_FULL_URL)
+
+print(WEBHOOK_FULL_URL)
+
+
+@app.post(WEBHOOK_PATH)
+async def bot_webhook(request: Request):
+    print(request)
+    update = types.Update(**await request.json())
+    await dp.process_update(update)
+
+
+@app.on_event("startup")
+async def startup_event():
+    await on_startup(dp)
+
 
 if __name__ == "__main__":
-    print('start bot')
-    asyncio.run(main())
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
+
+
+
+
+# async def main():
+#     bot = Bot(token=BOT_TOKEN)
+#     await dp.start_polling(bot)
+
+
 # if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="127.0.0.1", port=8001)
+#     print('start bot')
+#     asyncio.run(main())
+

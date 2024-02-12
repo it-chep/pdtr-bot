@@ -2,3 +2,14 @@
 venv
 .logs
 .env
+
+.DS_Store
+.project
+.pydevproject
+.vscode
+.devcontainer
+
+# Python-related ignores
+*.pyc
+*.pyo
+dumps/

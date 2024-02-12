@@ -10,15 +10,27 @@ from utils.markups.inline_markup import *
 from repository.repository import *
 from cache.redis import redis_client
 from models import Message
+import config
 
+
+# TODO: рефач
 
 async def get_built_message(message: types.Message, user):
-
     msg, markup, parse_mode = await _build_message(message.from_user.id, message.text)
     return await send_message(message, msg, markup, parse_mode, user)
 
 
 async def send_message(message: types.Message, msg: MessageModel, markup, parse_mode, user):
+    if isinstance(msg, str):
+        username = message.from_user.username if hasattr(message.from_user, 'username') else ""
+        msg = await message.bot.send_message(
+            config.TECH_SUPPORT_CHAT,
+            text=f"Неопознанное сообщение от {message.chat.first_name} \n@{username} \nUSER-INFO{str(user)}"
+        )
+        await message.send_copy(config.TECH_SUPPORT_CHAT)
+        await create_message_log(msg, user)
+        return
+
     if hasattr(msg, 'attachment_type_id') and msg.attachment_type_id:
         if msg.attachment_type.code == 'photo':
             sent_message = await message.answer_photo(
@@ -68,15 +80,16 @@ async def send_message(message: types.Message, msg: MessageModel, markup, parse_
             )
             await create_message_log(sent_message, user)
             return
-
-    sent_message = await message.answer(text=msg.text, parse_mode=parse_mode, reply_markup=markup)
+    if hasattr(msg, 'text'):
+        msg = msg.text
+    sent_message = await message.answer(text=msg, parse_mode=parse_mode, reply_markup=markup)
     await create_message_log(sent_message, user)
     return
 
 
-async def get_message_by_condition_id(condition_id: MessageCondition.id):
-    if condition:
-        query = select(MessageCondition.message_to).where(MessageCondition.id == condition_id)
+# async def get_message_by_condition_id(condition_id: MessageCondition.id):
+#     if condition:
+#         query = select(MessageCondition.message_to).where(MessageCondition.id == condition_id)
 
 
 async def get_message_by_id(message_id: Message.id, values=None):
@@ -97,6 +110,9 @@ async def get_message_by_id(message_id: Message.id, values=None):
             except Exception as e:
                 logger.error(e)
                 return str(e), None, None
+
+            if not markup:
+                markup = await clean_markup()
             parse_mode = "HTML"
             return message, markup, parse_mode
 
@@ -118,6 +134,8 @@ async def _build_message(user_id, handler) -> (str, List[str], str):
     except Exception as e:
         logger.error(e)
         return str(e), None, None
+    if not markup:
+        markup = await clean_markup()
     parse_mode = "HTML"
     return msg, markup, parse_mode
 
@@ -130,7 +148,8 @@ async def _get_markup_by_message_id(message_id) -> list:
         # Берем первый элемент, потому что кнопки могут быть только 1 типа
         button_type = buttons[0].button_type_id
         markup = await build_markup(buttons, button_type)
-
+    if not markup:
+        markup = await clean_markup()
     return markup
 
 

@@ -5,7 +5,6 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.content_type import ContentType
 
-from routers.questions.routers import any_handler
 from service.auth.service import get_tg_user
 from service.admin.service import admin_upload_file, admin_load_clients_from_file, admin_send_mailing
 from service.service import create_message_log
@@ -75,15 +74,4 @@ async def admin_get_file_id(message: types.Message,):
     if user_state == "load_users_from_file":
         msg = await admin_load_clients_from_file(message)
         await create_message_log(msg, user)
-
-
-@admin_router.message()
-async def message_fork(message: types.Message):
-    user = await get_tg_user(message)
-    user_state = redis_client.get_user_state(message.from_user.id)
-    if "mailing_all_users" in user_state:
-        return await admin_send_mailing(message, user)
-    else:
-        await any_handler(message)
-
 
