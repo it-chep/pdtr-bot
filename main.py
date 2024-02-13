@@ -19,6 +19,8 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+bot = Bot(token=BOT_TOKEN)
+
 WEBHOOK_FULL_URL = WEBHOOK_URL + WEBHOOK_PATH
 
 
@@ -27,38 +29,21 @@ async def root():
     return {"message": "Hello World"}
 
 
-async def on_startup(dp: Dispatcher):
-    bot = Bot(token=BOT_TOKEN)
+async def on_startup():
     await bot.set_webhook(WEBHOOK_FULL_URL)
-
-print(WEBHOOK_FULL_URL)
 
 
 @app.post(WEBHOOK_PATH)
 async def bot_webhook(request: Request):
-    print(request)
-    update = types.Update(**await request.json())
-    await dp.process_update(update)
+    update = types.Update.model_validate(await request.json(), context={"bot": bot})
+    await dp.feed_webhook_update(bot=bot, update=update)
 
 
 @app.on_event("startup")
 async def startup_event():
-    await on_startup(dp)
+    await on_startup()
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
-
-
-
-
-# async def main():
-#     bot = Bot(token=BOT_TOKEN)
-#     await dp.start_polling(bot)
-
-
-# if __name__ == "__main__":
-#     print('start bot')
-#     asyncio.run(main())
-
+    uvicorn.run(app, host="0.0.0.0", port=8000)
