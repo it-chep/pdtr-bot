@@ -82,7 +82,8 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
                 # Записываем состояние в redis
                 redis_client.set_user_state(message.chat.id, f'question_{question_number + 1}')
                 next_message_id = next_condition.message_to_id
-
+                msg = await message.answer("Ответ верный, так держать!")
+                await create_message_log(msg, user)
             else:
                 is_right_answer = False
                 lesson = None
