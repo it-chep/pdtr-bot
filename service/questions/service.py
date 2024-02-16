@@ -56,6 +56,9 @@ async def send_next_question(message: types.Message, message_text: str, state: s
         msg = await message.answer('Ответ неверный, попробуйте еще раз')
         await create_message_log(msg, user)
 
+    if not next_message_id:
+        return
+
     # Получение и отправка сообщения
     msg, markup, parse_mode = await get_message_by_id(next_message_id, values=answers)
     await send_message(message, msg, markup, parse_mode, user)

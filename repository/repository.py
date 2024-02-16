@@ -22,7 +22,11 @@ async def get_message_by_handler(handler):
             MessageCondition.condition == handler
         ).options(joinedload(MessageModel.attachment_type))
         message_to_send = await session.execute(query)
-        message_to_send = message_to_send.scalar_one_or_none()
+
+        try:
+            message_to_send = message_to_send.scalar_one_or_none()
+        except Exception:
+            raise MessageNotFoundError
 
         if not message_to_send:
             raise MessageNotFoundError

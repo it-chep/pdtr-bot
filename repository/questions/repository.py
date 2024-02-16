@@ -57,12 +57,18 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
         lessons_result = await session.execute(lessons_query)
 
         lessons = lessons_result.all()
-        current_condition = current_results.fetchone()[0]
-        next_condition = next_results.fetchone()[0]
+
+        current_condition = current_results.fetchone()
+        if current_condition:
+            current_condition = current_condition[0]
+
+        next_condition = next_results.fetchone()
+        if next_condition:
+            next_condition = next_condition[0]
 
         for lesson in lessons:
             lesson = lesson[0]
-            if lesson.message_to_id == next_condition.message_from_id:
+            if next_condition and lesson.message_to_id == next_condition.message_from_id:
                 break
             else:
                 lesson = None
@@ -73,17 +79,24 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
         if not message_condition:
             return None, answers, -1
 
+        next_message_id = None
         if message_condition.question:
-            question = next_condition.question
-            answers = [str(answer) for answer in question.answers]
 
             # Сравниваем ответ пользователя с правильным ответом
             if str(message_text) == str(message_condition.question.right_answer):
                 # Записываем состояние в redis
                 redis_client.set_user_state(message.chat.id, f'question_{question_number + 1}')
-                next_message_id = next_condition.message_to_id
                 msg = await message.answer("Ответ верный, так держать!")
                 await create_message_log(msg, user)
+                if next_condition:
+                    question = next_condition.question
+                    answers = [str(answer) for answer in question.answers]
+                    next_message_id = next_condition.message_to_id
+                else:
+                    msg = await message.answer(
+                        "На этом третий семинар заканчивается.\nЖдем вас на четвертом семинаре 😌"
+                    )
+                    await create_message_log(msg, user)
             else:
                 is_right_answer = False
                 lesson = None
@@ -105,7 +118,7 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
                 answers = [str(answer) for answer in question.answers]
         else:
             next_message_id = message_condition.message_to_id
-        if next_message_id == next_condition.message_to_id and lesson:
+        if next_condition and next_message_id == next_condition.message_to_id and lesson:
             # Это значит что ответ верный и следующее сообщение - видос
             message_condition = lesson
             next_message_id = lesson.message_to_id
@@ -113,9 +126,8 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
             msg = await message.answer("Тест завершен, ожидайте новый урок.")
             await create_message_log(msg, user)
 
-        if message_condition.delay_before_send:
-            await asyncio.sleep(message_condition.delay_before_send)
-
+            if message_condition.delay_before_send:
+                await asyncio.sleep(message_condition.delay_before_send)
         return is_right_answer, answers, next_message_id, lesson
 
 
@@ -126,8 +138,8 @@ async def get_question_after_lesson(state) -> int:
     except ValueError:
         # Обработка некорректного номера вопроса
         return
-    async with async_session_maker() as session:
 
+    async with async_session_maker() as session:
         condition_query = select(MessageCondition).join(
             MessageModel, MessageModel.id == MessageCondition.message_to_id
         ).outerjoin(
