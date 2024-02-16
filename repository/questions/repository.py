@@ -15,10 +15,10 @@ from db import async_session_maker
 async def check_answer(message: types.Message, message_text: str, question_number: int, user: TgUser) -> Tuple[
     bool, str, int, MessageCondition
 ]:
+    is_right_answer = True
+    answers = []
     async with async_session_maker() as session:
-        is_right_answer = True
         current_question = question_number - 1
-        answers = []
 
         # ##############################################
         current_condition_query = select(MessageCondition).join(
@@ -66,6 +66,7 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
         if next_condition:
             next_condition = next_condition[0]
 
+        lesson = None
         for lesson in lessons:
             lesson = lesson[0]
             if next_condition and lesson.message_to_id == next_condition.message_from_id:
