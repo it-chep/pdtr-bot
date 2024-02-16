@@ -29,7 +29,7 @@ services:
     image: redis
     command:
       - 'redis-server'
-      - '--loglevel ${REDIS_LOGLEVEL:-info}'
+      - '--loglevel ${REDIS_LOGLEVEL:-warning}'
       - '--databases 2'
       - '--save 900 1'
       - '--save 300 10'
