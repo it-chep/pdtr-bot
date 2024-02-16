@@ -27,6 +27,16 @@ services:
 
   redis:
     image: redis
+    command:
+      - 'redis-server'
+      - '--loglevel ${REDIS_LOGLEVEL:-info}'
+      - '--databases 2'
+      - '--save 900 1'
+      - '--save 300 10'
+      - '--save 60 10000'
+      - '--appendonly yes'
+      - '--maxmemory ${REDIS_MAXMEM:-1.5gb}'
+      - '--maxmemory-policy ${REDIS_POLICY:-noeviction}'
     ports:
       - "${REDIS_PORT}:${REDIS_PORT}"
     volumes:
@@ -45,3 +55,4 @@ services:
 volumes:
   pg_data:
   redis_data:
+    driver: local

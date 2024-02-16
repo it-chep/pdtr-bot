@@ -34,7 +34,7 @@ async def question_start(message: types.Message):
         msg = await message.answer("Тестирование невозможно начать сначала")
         await create_message_log(msg, user)
         return
-    return await send_first_question(message, message.text, 'question_65', user)
+    return await send_first_question(message, message.text, 'question_1', user)
 
 # TODO: выносим
 
