@@ -35,7 +35,7 @@ services:
       - '--save 300 10'
       - '--save 60 10000'
       - '--appendonly yes'
-      - '--maxmemory ${REDIS_MAXMEM:-1.5gb}'
+      - '--maxmemory ${REDIS_MAXMEM:-1610612736}'
       - '--maxmemory-policy ${REDIS_POLICY:-noeviction}'
     ports:
       - "${REDIS_PORT}:${REDIS_PORT}"
