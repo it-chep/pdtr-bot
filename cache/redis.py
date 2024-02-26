@@ -62,7 +62,7 @@ class RedisClient(object):
         Установить новое состояние пользователя в Redis.
         """
         try:
-            self.client.set(user_id, state)
+            self.client.set(user_id, state, ex=-1)
             return True
         except redis.RedisError as e:
             print(f"Ошибка при установке состояния пользователя: {e}")
@@ -73,7 +73,7 @@ class RedisClient(object):
         Установить новое состояние пользователя в Redis.
         """
         try:
-            self.client.set(key, value)
+            self.client.set(key, value, ex=-1)
             return True
         except redis.RedisError as e:
             print(f"Ошибка при установке значения {e}")

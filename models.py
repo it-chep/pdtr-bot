@@ -48,7 +48,7 @@ class TgUser(Base):
     permissions = Column(ChoiceType(UserPermissions, impl=Integer()), default=UserPermissions.user)
     bot_authorization = Column(Boolean, default=False)
     site_authorization = Column(Boolean, default=False)
-    last_state = Column(Integer)
+    last_state = Column(String(255), nullable=True)
     lists = Column(ARRAY(Integer))
     extra_data = Column(JSON, nullable=True)
 

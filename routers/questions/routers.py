@@ -56,6 +56,8 @@ async def any_handler(message: types.Message):
     await create_message_log(message, user)
 
     state = redis_client.get_user_state(message.from_user.id)
+    if not state:
+        state = await get_last_state(message.chat.id)
     if state and 'question' in state:
         return await send_next_question(message, message.text, state, user)
     return await get_built_message(message, user)

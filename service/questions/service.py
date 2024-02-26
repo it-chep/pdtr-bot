@@ -67,3 +67,7 @@ async def send_next_question(message: types.Message, message_text: str, state: s
         answers, next_message_id = await get_question_after_lesson(state)
         msg, markup, parse_mode = await get_message_by_id(next_message_id, values=answers)
         await send_message(message, msg, markup, parse_mode, user)
+
+
+async def get_last_state(tg_id):
+    return await get_last_state(tg_id)

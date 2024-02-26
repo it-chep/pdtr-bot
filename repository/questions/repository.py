@@ -87,6 +87,7 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
             if str(message_text) == str(message_condition.question.right_answer):
                 # Записываем состояние в redis
                 redis_client.set_user_state(message.chat.id, f'question_{question_number + 1}')
+                await set_last_state(message.chat.id, f'question_{question_number + 1}')
                 msg = await message.answer("Ответ верный, так держать!")
                 await create_message_log(msg, user)
                 if next_condition:
@@ -103,6 +104,7 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
                 lesson = None
                 # Если ответ неправильный, повторяем вопрос
                 redis_client.set_user_state(message.chat.id, f'question_{question_number}')
+                await set_last_state(message.chat.id, f'question_{question_number}')
                 next_message_id = message_condition.message_to_id
                 message_condition = await session.execute(
                     select(MessageCondition)
@@ -161,3 +163,19 @@ async def get_question_after_lesson(state) -> int:
             await asyncio.sleep(condition.delay_before_send)
 
         return answers, condition.message_to_id
+
+
+async def get_last_state(tg_id: int):
+    async with async_session_maker() as session:
+        query = select(TgUser.last_state).where(TgUser.tg_id == tg_id)
+        result = await session.execute(query)
+        state = result.fetchone()[0]
+        return state
+
+
+async def set_last_state(tg_id: int, state: str):
+    async with async_session_maker() as session:
+        query = update(TgUser).where(TgUser.tg_id == tg_id).values(last_state=state)
+        await session.execute(query)
+        await session.commit()
+        return state
