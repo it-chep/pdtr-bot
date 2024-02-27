@@ -70,4 +70,4 @@ async def send_next_question(message: types.Message, message_text: str, state: s
 
 
 async def get_last_state(tg_id):
-    return await get_last_state(tg_id)
+    return await repo_get_last_state(tg_id)

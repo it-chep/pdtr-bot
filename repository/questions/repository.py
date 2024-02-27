@@ -165,7 +165,7 @@ async def get_question_after_lesson(state) -> int:
         return answers, condition.message_to_id
 
 
-async def get_last_state(tg_id: int):
+async def repo_get_last_state(tg_id: int):
     async with async_session_maker() as session:
         query = select(TgUser.last_state).where(TgUser.tg_id == tg_id)
         result = await session.execute(query)
