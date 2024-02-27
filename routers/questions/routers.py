@@ -21,7 +21,7 @@ async def any_callback(callback: CallbackQuery):
 
     state = redis_client.get_user_state(callback.message.chat.id)
     if not state:
-        state = await get_last_state(message.chat.id)
+        state = await get_last_state(callback.message.chat.id)
     if state and 'question' in state:
         return await send_next_question(callback.message, callback.data, state, user)
     return await get_built_message(callback.message, user)
