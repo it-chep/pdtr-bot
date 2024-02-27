@@ -140,7 +140,7 @@ class MessageCondition(Base):
     __tablename__ = "message_condition"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255), nullable=True)
+    name = Column(Text, nullable=True)
 
     # modifications start
     date = Column(Date, nullable=True)  # Дата отправки
@@ -166,7 +166,7 @@ class Message(Base):
     __tablename__ = "message"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255), nullable=False)
+    name = Column(Text, nullable=False)
     text = Column(Text, nullable=False)
     attachment_type_id = Column(Integer, ForeignKey('attachment_type.id'))
     attachment_id = Column(String(255), nullable=True)
@@ -206,7 +206,7 @@ class Mailing(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     # Уникальное имя рассылки. Может использоваться для идентификации рассылки в интерфейсе пользователя или логах.
-    name = Column(String(255), info={'verbose_name': 'Имя рассылки'})
+    name = Column(Text, info={'verbose_name': 'Имя рассылки'})
     # Описание рассылки. Может содержать информацию о цели рассылки, её содержании или любые другие заметки.
     description = Column(Text, info={'verbose_name': 'Описание'})
     # ID создателя рассылки, ссылается на таблицу пользователей (tg_users). Гарантирует, что каждая рассылка имеет
