@@ -96,7 +96,7 @@ async def check_answer(
                     next_message_id = next_condition.message_to_id
                 else:
                     msg = await message.answer(
-                        "На этом третий семинар заканчивается.\nЖдем вас на четвертом семинаре 😌"
+                        "На этом семинар заканчивается.\nЖдем вас снова 😌"
                     )
                     await create_message_log(msg, user)
             else:
