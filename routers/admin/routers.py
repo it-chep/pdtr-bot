@@ -5,6 +5,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.content_type import ContentType
 
+from service.questions.service import remove_state
 from service.auth.service import get_tg_user
 from service.admin.service import admin_upload_file, admin_load_clients_from_file, admin_send_mailing
 from service.service import create_message_log
@@ -43,7 +44,7 @@ async def admin_load_clients_message(message: types.Message,):
 async def clean_upload_file_state(message: types.Message):
     redis_client.delete_user_state(message.from_user.id)
     user = await get_tg_user(message)
-
+    await remove_state(user.tg_id)
     msg = await message.answer(text="Убрал все ваши состояния")
     await create_message_log(msg, user)
 

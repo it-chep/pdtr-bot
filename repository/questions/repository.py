@@ -12,13 +12,13 @@ from models import Message as MessageModel, MessageCondition, AttachmentType, Qu
 from db import async_session_maker
 
 
-async def check_answer(message: types.Message, message_text: str, question_number: int, user: TgUser) -> Tuple[
-    bool, str, int, MessageCondition
-]:
+async def check_answer(
+        message: types.Message, message_text: str, seminar_number: int, state_question_number: int, user: TgUser
+) -> Tuple[bool, str, int, MessageCondition]:
     is_right_answer = True
     answers = []
     async with async_session_maker() as session:
-        current_question = question_number - 1
+        current_question = state_question_number - 1
 
         # ##############################################
         current_condition_query = select(MessageCondition).join(
@@ -27,7 +27,7 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
             AttachmentType, MessageModel.attachment_type_id == AttachmentType.id
         ).join(
             Question, Question.id == MessageCondition.question_id
-        ).where(MessageCondition.question_id == current_question).options(
+        ).where((MessageCondition.question_number == current_question) & (Question.seminar == seminar_number)).options(
             joinedload(MessageCondition.message_to).joinedload(MessageModel.attachment_type),
             joinedload(MessageCondition.question)
         )
@@ -39,7 +39,7 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
             AttachmentType, MessageModel.attachment_type_id == AttachmentType.id
         ).join(
             Question, Question.id == MessageCondition.question_id
-        ).where(MessageCondition.question_id == question_number).options(
+        ).where((MessageCondition.question_number == state_question_number) & (Question.seminar == seminar_number)).options(
             joinedload(MessageCondition.message_to).joinedload(MessageModel.attachment_type),
             joinedload(MessageCondition.question)
         )
@@ -78,7 +78,7 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
 
         # Проверяем, найдено ли условие и есть ли вопрос
         if not message_condition:
-            return None, answers, -1
+            return None, answers, -1, lesson
 
         next_message_id = None
         if message_condition.question:
@@ -86,8 +86,8 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
             # Сравниваем ответ пользователя с правильным ответом
             if str(message_text) == str(message_condition.question.right_answer):
                 # Записываем состояние в redis
-                redis_client.set_user_state(message.chat.id, f'question_{question_number + 1}')
-                await set_last_state(message.chat.id, f'question_{question_number + 1}')
+                redis_client.set_user_state(message.chat.id, f'question_{seminar_number}_{state_question_number + 1}')
+                await set_last_state(message.chat.id, f'question_{seminar_number}_{state_question_number + 1}')
                 msg = await message.answer("Ответ верный, так держать!")
                 await create_message_log(msg, user)
                 if next_condition:
@@ -103,8 +103,8 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
                 is_right_answer = False
                 lesson = None
                 # Если ответ неправильный, повторяем вопрос
-                redis_client.set_user_state(message.chat.id, f'question_{question_number}')
-                await set_last_state(message.chat.id, f'question_{question_number}')
+                redis_client.set_user_state(message.chat.id, f'question_{seminar_number}_{state_question_number}')
+                await set_last_state(message.chat.id, f'question_{seminar_number}_{state_question_number}')
                 next_message_id = message_condition.message_to_id
                 message_condition = await session.execute(
                     select(MessageCondition)
@@ -115,7 +115,7 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
 
                 # Проверяем, найдено ли условие и есть ли вопрос
                 if not message_condition or not message_condition.question:
-                    return None, [], -1
+                    return None, [], -1, lesson
 
                 question = message_condition.question
                 answers = [str(answer) for answer in question.answers]
@@ -135,9 +135,10 @@ async def check_answer(message: types.Message, message_text: str, question_numbe
 
 
 async def get_question_after_lesson(state) -> int:
-    question_number = state.split('_')[-1]
+    state_question_number = state.split('_')[-1]
     try:
-        question_number = int(question_number)
+        state_question_number = int(state_question_number)
+        seminar_number = int(state.split('_')[-2])
     except ValueError:
         # Обработка некорректного номера вопроса
         return
@@ -149,7 +150,7 @@ async def get_question_after_lesson(state) -> int:
             AttachmentType, MessageModel.attachment_type_id == AttachmentType.id
         ).join(
             Question, Question.id == MessageCondition.question_id
-        ).where(MessageCondition.question_id == question_number).options(
+        ).where((MessageCondition.question_number == state_question_number) & (Question.seminar == seminar_number)).options(
             joinedload(MessageCondition.message_to).joinedload(MessageModel.attachment_type),
             joinedload(MessageCondition.question)
         )
@@ -179,3 +180,11 @@ async def set_last_state(tg_id: int, state: str):
         await session.execute(query)
         await session.commit()
         return state
+
+
+async def repo_remove_state(tg_id: int):
+    async with async_session_maker() as session:
+        query = update(TgUser).where(TgUser.tg_id == tg_id).values(last_state=None)
+        await session.execute(query)
+        await session.commit()
+        return

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 async def send_first_question(message, message_text, state, user):
     question_number = int(state.split('_')[-1])
+    seminar_number = int(state.split('_')[-2])
     # Используем асинхронный контекстный менеджер для работы с сессией
     async with async_session_maker() as session:
         # Запрашиваем условие для текущего вопроса
@@ -31,7 +32,7 @@ async def send_first_question(message, message_text, state, user):
         answers = [str(answer) for answer in question.answers]
 
         # Обновляем состояние пользователя в Redis
-        redis_client.set_user_state(message.chat.id, f'question_{question_number + 1}')
+        redis_client.set_user_state(message.chat.id, f'question_{seminar_number}_{question_number + 1}')
 
         # Подготовка и отправка сообщения с вопросом и клавиатурой
         next_message_id = message_condition.message_to_id
@@ -45,10 +46,13 @@ async def send_next_question(message: types.Message, message_text: str, state: s
     question_number = state.split('_')[-1]
     try:
         question_number = int(question_number)
+        seminar_number = int(state.split('_')[-2])
     except ValueError:
         # Обработка некорректного номера вопроса
         return
-    is_right_answer, answers, next_message_id, lesson = await check_answer(message, message_text, question_number, user)
+    is_right_answer, answers, next_message_id, lesson = await check_answer(
+        message, message_text, seminar_number, question_number, user
+    )
 
     if is_right_answer is None:
         return
@@ -71,3 +75,7 @@ async def send_next_question(message: types.Message, message_text: str, state: s
 
 async def get_last_state(tg_id):
     return await repo_get_last_state(tg_id)
+
+
+async def remove_state(tg_id):
+    return await repo_remove_state(tg_id)

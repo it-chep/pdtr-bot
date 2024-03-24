@@ -63,6 +63,8 @@ class Question(Base):
     right_answer = Column(Integer, nullable=False)
     text = Column(Text, nullable=True)
     answers = Column(ARRAY(Integer), nullable=False)
+    seminar = Column(Integer, nullable=True)
+    question_number = Column(Integer, nullable=True)
     next_question_id = Column(Integer, ForeignKey('questions.id'), nullable=True)  # ID следующего вопроса
     next_question = relationship('Question', remote_side=[id])
 
@@ -160,6 +162,10 @@ class MessageCondition(Base):
 
     question_id = Column(Integer, ForeignKey('questions.id'), nullable=True)
     question = relationship('Question', foreign_keys=[question_id])
+
+    question_number = Column(Integer, nullable=True)
+    # question_number_id = Column(Integer, ForeignKey('questions.question_number'), nullable=True)
+
 
 
 class Message(Base):
