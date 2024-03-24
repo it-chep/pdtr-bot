@@ -31,11 +31,12 @@ async def any_callback(callback: CallbackQuery):
 async def question_start_1_sem(message: types.Message):
     user = await get_tg_user(message)
     await create_message_log(message, user)
-    state = redis_client.get_user_state(message.from_user.id)
-    if state:
-        msg = await message.answer("Тестирование невозможно начать сначала")
-        await create_message_log(msg, user)
-        return
+    # TODO убрано до лучших времен
+    # state = redis_client.get_user_state(message.from_user.id)
+    # if state:
+    #     msg = await message.answer("Тестирование невозможно начать сначала")
+    #     await create_message_log(msg, user)
+    #     return
     return await send_first_question(message, message.text, 'question_1_1', user)
 
 
@@ -43,11 +44,12 @@ async def question_start_1_sem(message: types.Message):
 async def question_start_2_sem(message: types.Message):
     user = await get_tg_user(message)
     await create_message_log(message, user)
-    state = redis_client.get_user_state(message.from_user.id)
-    if state:
-        msg = await message.answer("Тестирование невозможно начать сначала")
-        await create_message_log(msg, user)
-        return
+    # TODO убрано до лучших времен
+    # state = redis_client.get_user_state(message.from_user.id)
+    # if state:
+    #     msg = await message.answer("Тестирование невозможно начать сначала")
+    #     await create_message_log(msg, user)
+    #     return
     return await send_first_question(message, message.text, 'question_2_1', user)
 
 
@@ -55,11 +57,12 @@ async def question_start_2_sem(message: types.Message):
 async def question_start_3_sem(message: types.Message):
     user = await get_tg_user(message)
     await create_message_log(message, user)
-    state = redis_client.get_user_state(message.from_user.id)
-    if state:
-        msg = await message.answer("Тестирование невозможно начать сначала")
-        await create_message_log(msg, user)
-        return
+    # TODO убрано до лучших времен
+    # state = redis_client.get_user_state(message.from_user.id)
+    # if state:
+    #     msg = await message.answer("Тестирование невозможно начать сначала")
+    #     await create_message_log(msg, user)
+    #     return
     return await send_first_question(message, message.text, 'question_3_1', user)
 
 
@@ -67,11 +70,12 @@ async def question_start_3_sem(message: types.Message):
 async def question_start_4_sem(message: types.Message):
     user = await get_tg_user(message)
     await create_message_log(message, user)
-    state = redis_client.get_user_state(message.from_user.id)
-    if state:
-        msg = await message.answer("Тестирование невозможно начать сначала")
-        await create_message_log(msg, user)
-        return
+    # TODO убрано до лучших времен
+    # state = redis_client.get_user_state(message.from_user.id)
+    # if state:
+    #     msg = await message.answer("Тестирование невозможно начать сначала")
+    #     await create_message_log(msg, user)
+    #     return
     return await send_first_question(message, message.text, 'question_4_1', user)
 
 
