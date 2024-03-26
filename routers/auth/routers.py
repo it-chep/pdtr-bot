@@ -28,7 +28,12 @@ async def start_message(message: types.Message):
     user = await get_tg_user(message)
     await create_message_log(message, user)
 
-    return await get_built_message(message, user)
+    return await get_built_message(
+        message=message,
+        tg_user_id=message.from_user.id,
+        user=user,
+        text=message.text
+    )
 
 
 @auth_router.message(Command('registration'))

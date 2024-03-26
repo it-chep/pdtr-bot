@@ -15,8 +15,8 @@ import config
 
 # TODO: рефач
 
-async def get_built_message(message: types.Message, user):
-    msg, markup, parse_mode = await _build_message(message.from_user.id, message.text)
+async def get_built_message(message: types.Message, tg_user_id: int, user: models.TgUser, text: str):
+    msg, markup, parse_mode = await _build_message(tg_user_id, text)
     return await send_message(message, msg, markup, parse_mode, user)
 
 
