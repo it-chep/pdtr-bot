@@ -93,6 +93,18 @@ async def question_start_4_sem(message: types.Message):
     return await send_first_question(message, message.text, 'question_4_1', user)
 
 
+@question_router.message(F.text == 'Начать тестирование 5 семинар')
+async def question_start_4_sem(message: types.Message):
+    user = await get_tg_user(message)
+    await create_message_log(message, user)
+    # TODO убрано до лучших времен
+    # state = redis_client.get_user_state(message.from_user.id)
+    # if state:
+    #     msg = await message.answer("Тестирование невозможно начать сначала")
+    #     await create_message_log(msg, user)
+    #     return
+    return await send_first_question(message, message.text, 'question_5_1', user)
+
 # TODO: выносим
 
 
