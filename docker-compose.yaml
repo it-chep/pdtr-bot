@@ -22,6 +22,8 @@ services:
       POSTGRES_DB: ${DB_NAME}
     ports:
       - "${DB_PORT}:${DB_PORT}"
+    expose:
+      - ${DB_PORT}
     volumes:
       - pg_data:/var/lib/postgresql/data
 
@@ -29,6 +31,8 @@ services:
     image: redis
     ports:
       - "${REDIS_PORT}:${REDIS_PORT}"
+    expose:
+      - ${REDIS_PORT}
     volumes:
       - redis_data:/data
 
