@@ -5,7 +5,7 @@ from sqlalchemy import select, and_, update, or_
 from sqlalchemy.orm import joinedload
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import types
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
 from repository.repository import create_message_log
 from cache.redis import redis_client
 from models import Message as MessageModel, MessageCondition, AttachmentType, Question, TgUser
@@ -95,8 +95,17 @@ async def check_answer(
                     answers = [str(answer) for answer in question.answers]
                     next_message_id = next_condition.message_to_id
                 else:
+                    markup = InlineKeyboardMarkup(
+                        inline_keyboard=[
+                            [InlineKeyboardButton(text="1 семинар", callback_data="start_seminar_1")],
+                            [InlineKeyboardButton(text="2 семинар", callback_data="start_seminar_2")],
+                            [InlineKeyboardButton(text="3 семинар", callback_data="start_seminar_3")],
+                            [InlineKeyboardButton(text="4 семинар", callback_data="start_seminar_4")],
+                            [InlineKeyboardButton(text="5 семинар", callback_data="start_seminar_5")],
+                        ]
+                    )
                     msg = await message.answer(
-                        "На этом семинар заканчивается.\nЖдем вас снова 😌"
+                        "На этом семинар заканчивается.\nЖдем вас снова 😌", reply_markup=markup
                     )
                     await create_message_log(msg, user)
             else:
@@ -123,14 +132,16 @@ async def check_answer(
             next_message_id = message_condition.message_to_id
         if next_condition and next_message_id == next_condition.message_to_id and lesson:
             # Это значит что ответ верный и следующее сообщение - видос
-            message_condition = lesson
-            next_message_id = lesson.message_to_id
-            answers = []
-            msg = await message.answer("Тест завершен, ожидайте новый урок.")
+            markup = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="Следующий урок", callback_data="next_lesson")]
+                ]
+            )
+            msg = await message.answer("Тест завершен, хотите начать новый урок?", reply_markup=markup)
             await create_message_log(msg, user)
 
-            if message_condition.delay_before_send:
-                await asyncio.sleep(message_condition.delay_before_send)
+            return None, None, None, None
+
         return is_right_answer, answers, next_message_id, lesson
 
 

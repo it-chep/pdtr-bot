@@ -2,7 +2,7 @@ import logging
 
 from aiogram import types, Router, F
 from aiogram.filters import Command
-from aiogram.types import Contact
+from aiogram.types import Contact, ReplyKeyboardRemove
 from aiogram.enums.content_type import ContentType
 from service.auth.service import get_phone_markup, create_tg_user, update_tg_user_phone, get_tg_user
 
@@ -46,9 +46,18 @@ async def registration_message(message: types.Message):
 
 
 @auth_router.message(F.contact)
-async def save_number(message: types.Message):
-    user = await get_tg_user(message)
+async def register_user(message: types.Message):
+    text = "Поздравляем, вы авторизованы, приятного использования бота. Пожалуйста нажмите /start"
+    await message.answer(text=text, reply_markup=ReplyKeyboardRemove())
 
-    await update_tg_user_phone(message=message)
-    text = await _get_message_by_handler_service(message.text)
-    await message.answer(text=text, reply_markup=start_markup().as_markup())
+
+@auth_router.message(F.contact)
+async def unauthorized_user(message: types.Message):
+    text = "К сожалению, у вас нет доступа к функционалу этого бота"
+    await message.answer(text=text, reply_markup=ReplyKeyboardRemove())
+
+
+async def request_phone_number(message: types.Message):
+    text = "Пожалуйста отправьте номер телефона, чтобы авторизоваться (нажмите не кнопку снизу)"
+    markup = await get_phone_markup()
+    await message.answer(text=text, reply_markup=markup.as_markup())

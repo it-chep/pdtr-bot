@@ -241,3 +241,28 @@ class Mailing(Base):
 
     def __repr__(self):
         return f"<Mailing(name={self.name})>"
+
+
+class UserDirectory(Base):
+    __tablename__ = 'user_directory'
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    phone = Column(
+        Text,
+        info={'verbose_name': 'Телефон пользователя'},
+    )
+
+    tg_id = Column(
+        BigInteger,
+        info={'verbose_name': 'TgId'},
+        nullable=True,
+    )
+
+    def __repr__(self):
+        return f"<Users's Phone (phone={self.phone})>"
+

@@ -2,8 +2,11 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.types import KeyboardButton, Message
 from sqlalchemy import select, and_, update
 from datetime import datetime
+
+from sqlalchemy.exc import SQLAlchemyError
+
 from db import async_session_maker
-from models import TgUser, UserPermissions
+from models import TgUser, UserPermissions, UserDirectory
 
 
 async def get_phone_markup():
@@ -43,7 +46,7 @@ async def update_tg_user_phone(message: Message):
         await session.commit()
 
 
-async def get_tg_user(message: Message):
+async def get_tg_user(message: Message) -> TgUser:
     async with async_session_maker() as session:
         user = await session.execute(select(TgUser).filter_by(tg_id=message.from_user.id))
         user = user.scalar()
@@ -51,3 +54,32 @@ async def get_tg_user(message: Message):
     return user
 
 
+async def check_user_phone(phone: str):
+    async with async_session_maker() as session:
+        user = await session.execute(select(UserDirectory).filter_by(phone=phone))
+        user = user.scalar()
+
+    return user
+
+
+async def authorize_user(user: TgUser, phone:str):
+    async with async_session_maker() as session:
+        try:
+            await session.execute(
+                update(TgUser)
+                .where(TgUser.tg_id == user.tg_id)
+                .values(bot_authorization=True)
+            )
+
+            await session.execute(
+                update(UserDirectory)
+                .where(UserDirectory.phone == phone)
+                .values(tg_id=user.tg_id)
+            )
+
+            await session.commit()
+
+        except SQLAlchemyError as e:
+            await session.rollback()
+            print(f"An error occurred: {e}")
+            raise

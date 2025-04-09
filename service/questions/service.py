@@ -1,8 +1,8 @@
-import logging
+from aiogram.types import CallbackQuery
+
 from repository.questions.repository import *
 from service.service import *
-from typing import List
-from sqlalchemy import select, and_, update
+from sqlalchemy import select
 from models import Question, TgUser
 from cache.redis import redis_client
 from sqlalchemy.orm import joinedload
@@ -71,6 +71,36 @@ async def send_next_question(message: types.Message, message_text: str, state: s
         answers, next_message_id = await get_question_after_lesson(state)
         msg, markup, parse_mode = await get_message_by_id(next_message_id, values=answers)
         await send_message(message, msg, markup, parse_mode, user)
+
+
+async def next_lesson(callback: CallbackQuery, state: str, user):
+    question_number = state.split('_')[-1]
+    try:
+        question_number = int(question_number)
+        seminar_number = int(state.split('_')[-2])
+    except ValueError:
+        # Обработка некорректного номера вопроса
+        return
+
+    state = f'question_{seminar_number}_{question_number - 1}'
+    async with async_session_maker() as session:
+        question_query = select(Question).where(
+            (Question.seminar == seminar_number) & (Question.question_number == question_number - 1)
+        )
+
+        result = await session.execute(question_query)
+        question = result.scalar_one_or_none()
+
+        query = select(MessageCondition).where(MessageCondition.question_id == question.id)
+        result_message_condition = await session.execute(query)
+        message_condition = result_message_condition.scalar_one_or_none()
+
+        msg, markup, parse_mode = await get_message_by_id(message_condition.message_from_id)
+        await send_message(callback.message, msg, markup, parse_mode, user)
+
+        answers, next_message_id = await get_question_after_lesson(state)
+        msg, markup, parse_mode = await get_message_by_id(next_message_id, values=answers)
+        await send_message(callback.message, msg, markup, parse_mode, user)
 
 
 async def get_last_state(tg_id):

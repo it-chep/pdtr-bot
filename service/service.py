@@ -68,12 +68,6 @@ async def send_message(message: types.Message, msg: MessageModel, markup, parse_
             )
             await create_message_log(sent_message, user)
             return
-        elif msg.attachment_type.code == 'document':
-            sent_message = await message.answer_document(
-                document=msg.attachment_id, caption=msg.text, parse_mode=parse_mode, reply_markup=markup,
-            )
-            await create_message_log(sent_message, user)
-            return
         elif msg.attachment_type.code == 'phone':
             sent_message = await message.answer_contact(
                 phone_number=msg.attachment_id, first_name=msg.text

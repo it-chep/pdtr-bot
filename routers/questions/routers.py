@@ -22,6 +22,52 @@ async def any_callback(callback: CallbackQuery):
     state = redis_client.get_user_state(callback.message.chat.id)
     if not state:
         state = await get_last_state(callback.message.chat.id)
+
+    if callback.data == "next_lesson":
+        return await next_lesson(callback, state, user)
+
+    if callback.data == "start_seminar_1":
+        await clean_user_state(message=callback.message)
+        return await get_built_message(
+            message=callback.message,
+            tg_user_id=callback.message.from_user.id,
+            user=user,
+            text="Начать 1 семинар"
+        )
+    if callback.data == "start_seminar_2":
+        await clean_user_state(message=callback.message)
+        return await get_built_message(
+            message=callback.message,
+            tg_user_id=callback.message.from_user.id,
+            user=user,
+            text="Начать 2 семинар"
+        )
+    if callback.data == "start_seminar_3":
+        await clean_user_state(message=callback.message)
+        return await get_built_message(
+            message=callback.message,
+            tg_user_id=callback.message.from_user.id,
+            user=user,
+            text="Начать 3 семинар"
+        )
+    if callback.data == "start_seminar_4":
+        await clean_user_state(message=callback.message)
+        return await get_built_message(
+            message=callback.message,
+            tg_user_id=callback.message.from_user.id,
+            user=user,
+            text="Начать 4 семинар"
+        )
+
+    if callback.data == "start_seminar_5":
+        await clean_user_state(message=callback.message)
+        return await get_built_message(
+            message=callback.message,
+            tg_user_id=callback.message.from_user.id,
+            user=user,
+            text="Начать 5 семинар"
+        )
+
     if state and 'question' in state:
         return await send_next_question(callback.message, callback.data, state, user)
     return await get_built_message(
@@ -32,8 +78,14 @@ async def any_callback(callback: CallbackQuery):
     )
 
 
-@question_router.message(Command('exit_seminar'))
 async def clean_user_state(message: types.Message):
+    redis_client.delete_user_state(message.from_user.id)
+    user = await get_tg_user(message)
+    await remove_state(user.tg_id)
+
+
+@question_router.message(Command('exit_seminar'))
+async def exit_seminar(message: types.Message):
     redis_client.delete_user_state(message.from_user.id)
     user = await get_tg_user(message)
     await remove_state(user.tg_id)
@@ -94,7 +146,7 @@ async def question_start_4_sem(message: types.Message):
 
 
 @question_router.message(F.text == 'Начать тестирование 5 семинар')
-async def question_start_4_sem(message: types.Message):
+async def question_start_5_sem(message: types.Message):
     user = await get_tg_user(message)
     await create_message_log(message, user)
     # TODO убрано до лучших времен
@@ -104,6 +156,7 @@ async def question_start_4_sem(message: types.Message):
     #     await create_message_log(msg, user)
     #     return
     return await send_first_question(message, message.text, 'question_5_1', user)
+
 
 # TODO: выносим
 
@@ -124,11 +177,16 @@ async def any_handler(message: types.Message):
     user = await get_tg_user(message)
     await create_message_log(message, user)
 
+    if message.text == '/exit_seminar':
+        await clean_user_state(message=message)
+
     state = redis_client.get_user_state(message.from_user.id)
     if not state:
         state = await get_last_state(message.chat.id)
+
     if state and 'question' in state:
         return await send_next_question(message, message.text, state, user)
+
     return await get_built_message(
         message=message,
         tg_user_id=message.from_user.id,
