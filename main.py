@@ -9,8 +9,13 @@ from config import BOT_TOKEN, WEBHOOK_URL, WEBHOOK_PATH
 from routers.questions.routers import question_router
 from routers.auth.routers import auth_router
 from routers.admin.routers import admin_router
+from middleware import AuthMiddleware
 
 dp = Dispatcher()
+
+dp.message.middleware(AuthMiddleware())
+dp.callback_query.middleware(AuthMiddleware())
+
 dp.include_router(admin_router)
 dp.include_router(auth_router)
 dp.include_router(question_router)
